@@ -1,0 +1,464 @@
+:root {
+   /* Courbe "Out-Expo" : démarre très vite et finit en douceur */
+    --easing: cubic-bezier(0.19, 1, 0.22, 1); 
+    --transition-long: 0.6s var(--easing);
+    --glitch-red: #ff003c;
+    --glitch-blue: #00f0ff;
+    --menu-width-max: 45%; 
+}
+
+/* Ajoutez ceci au début de votre CSS pour optimiser globalement */
+.side-menu, .menu-content, #overlay, #logo, .side-label {
+    backface-visibility: hidden;
+    perspective: 1000px;
+    will-change: width, transform, opacity; /* Prévient le navigateur de l'animation */
+}
+
+body, html {
+    cursor: none !important;
+    margin: 0; padding: 0;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    display: flex;
+    background-color: ivory;
+    font-family: 'Inter', system-ui, sans-serif;
+}
+
+#cursor {
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    background-image: url('https://i.imgur.com/8FCKZAi.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 9999999;
+    transform: translate(-50%, -50%);
+    filter: invert(1);
+    mix-blend-mode: difference;
+}
+
+/* Supprime TOUS les curseurs natifs */
+*,
+*::before,
+*::after {
+    cursor: none !important;
+}
+
+/* --- LOGIQUE DES MENUS --- */
+.side-menu {
+    height: 100%;
+    width: 0;
+    opacity: 0;
+    position: relative;
+    display: flex;
+    align-items: center; /* Centre verticalement le contenu */
+    justify-content: center;
+    transition: width var(--transition-long), opacity 0.6s ease;
+    z-index: 20;
+    overflow: hidden; /* Changé à hidden pour contenir parfaitement le flou */
+}
+
+.menu-content {
+    width: 45vw;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centre verticalement le texte */
+    align-items: center;
+    flex-shrink: 0;
+    transition: transform var(--transition-long);
+}
+
+.side-menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+    transition: transform var(--transition-long);
+    filter: brightness(0.9);
+}
+
+#menu-left::before { 
+    background-image: url('https://i.imgur.com/0sce0hW.png');
+    transform: translateX(-20%);
+}
+
+#menu-right::before { 
+    background-image: url('https://i.imgur.com/BEYLTAg.jpeg');
+    /* Suppression du margin-left pour éviter les décalages de flou */
+    transform: translateX(20%);
+}
+
+body.left-active #menu-left, body.right-active #menu-right { 
+    width: var(--menu-width-max); 
+    opacity: 1; 
+}
+
+body.left-active #menu-left::before, body.right-active #menu-right::before {
+    transform: translateX(0);
+}
+
+/* --- COPYRIGHT STYLE --- */
+.copyright {
+    position: absolute;
+    bottom: 30px;
+    left: 30px;
+    color: #000; /* Noir sur fond Ivory */
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 10;
+    opacity: 0.5;
+    transition: opacity 0.6s var(--easing);
+    white-space: nowrap;
+}
+
+.copyright-right {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    color: #ffffff; /* Noir sur fond Ivory */
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 10;
+    opacity: 0.5;
+    transition: opacity 0.6s var(--easing);
+    white-space: nowrap;
+}
+
+.instruction {
+    color: #000;
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.6;
+    margin: 0;              /* Reset important */
+    text-align: center;
+    transition: opacity 0.5s var(--easing), transform 0.5s var(--easing);
+    white-space: nowrap;    /* Garde le texte sur une ligne */
+    animation: pulse-attention 2s infinite ease-in-out;
+}
+
+@keyframes pulse-attention {
+    0%, 100% { 
+        opacity: 0.3; 
+        transform: scale(0.97); /* Rétrécit légèrement */
+    }
+    50% { 
+        opacity: 1;    /* Devient totalement opaque */
+        transform: scale(1.05); /* Grandit légèrement */
+        text-shadow: 0 0 10px rgba(0,0,0,0.1); /* Petit halo de lumière */
+    }
+}
+
+/* Masquage quand un menu est actif */
+body.left-active .instruction, 
+body.right-active .instruction {
+    opacity: 0;
+    animation: none;
+    pointer-events: none;
+    transform: translateY(15px); /* Glisse vers le bas en disparaissant */
+}
+
+/* --- ZONE CENTRALE (FIX FLOU) --- */
+#main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    transition: all var(--transition-long);
+    overflow: hidden; 
+    isolation: isolate; 
+}
+
+#logo { 
+    max-width: 650px;
+    width: 90vw;            /* Pour que le logo ne dépasse pas sur petit écran */
+    height: auto;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
+    transition: transform 0.8s var(--easing);
+    z-index: 10;
+}
+
+
+#overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0);
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+    transition: all 0.9s var(--easing);
+    pointer-events: none;
+    z-index: 5;
+    transform: translateZ(0); 
+}
+
+body.left-active #overlay, body.right-active #overlay {
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    background: rgba(0, 0, 0, 0.4); /* Plus sombre mais moins de flou */
+    backdrop-filter: blur(8px); /* 8px au lieu de 15px pour gagner en FPS */
+}
+
+/* --- TEXTE & ANIMATIONS --- */
+.menu-link {
+    color: ivory;
+    text-decoration: none;
+    font-size: 3rem;
+    font-weight: 900;
+    letter-spacing: 12px;
+    text-transform: uppercase;
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.menu-link::after {
+    content: "";
+    position: absolute;
+    bottom: -10px; left: 0;
+    width: 100%; height: 2px;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.45s var(--easing);
+}
+.menu-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+/* GAUCHE : GLITCH Permanent */
+.glitch { position: relative; }
+.glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+}
+.glitch::before { color: var(--glitch-red); animation: shift-red 2s infinite var(--easing); opacity: 0.7; }
+.glitch::after { color: var(--glitch-blue); animation: shift-blue 2s infinite var(--easing) reverse; opacity: 0.7; }
+
+@keyframes shift-red { 0%, 100% { transform: translate(0); } 20% { transform: translate(-4px, 2px); } 40% { transform: translate(-2px, -2px); } }
+@keyframes shift-blue { 0%, 100% { transform: translate(0); } 30% { transform: translate(4px, -2px); } 50% { transform: translate(2px, 2px); } }
+
+/* DROITE : Récentrage & Révélation */
+#menu-right .menu-content.align-bottom {
+    /* Suppression de justify-content: flex-end et du padding-bottom */
+    margin-left: 35px;
+    padding-bottom: 0;
+    justify-content: center; 
+    /* Décalage vertical léger vers le bas */
+    padding-top: 24vh; 
+    /* Compensation pour garder le centrage visuel si nécessaire */
+    margin-left: 35px;
+}
+
+/* État de base (Plein) */
+#menu-right .menu-link {
+    color: ivory;
+    -webkit-text-stroke: 1px transparent; /* Prépare le contour sans l'afficher */
+    transition: 
+        color 0.4s var(--easing), 
+        -webkit-text-stroke 0.4s var(--easing),
+        letter-spacing 0.4s var(--easing);
+}
+
+/* État Hover (Contour uniquement) */
+#menu-right .menu-link:hover {
+    color: transparent; /* Le fond de la lettre devient invisible */
+    -webkit-text-stroke: 2px ivory; /* Le contour apparaît */
+    letter-spacing: 12px; /* Un léger écartement supplémentaire pour le style */
+}
+
+/* On désactive le soulignement (::after) pour ce bouton spécifique 
+   si vous trouvez que cela surcharge le design "Outline" */
+#menu-right .menu-link::after {
+    display: none; 
+}
+
+/* État Hover : On vide le centre et on trace le contour */
+#menu-left .menu-link:hover {
+    color: transparent;
+    -webkit-text-stroke: 1px ivory;
+    letter-spacing: 12px;
+}
+
+.reveal-container {
+    overflow: hidden;
+    position: relative;
+    padding-right: 20px;
+}
+
+.writing {
+    transform: translateX(-105%);
+    opacity: 0;
+    transition: transform 1.2s var(--easing), opacity 0.5s ease;
+}
+
+.pencil-cursor {
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: white;
+    box-shadow: 0 0 15px white;
+    transform: translateX(-100%);
+    transition: transform 1.2s var(--easing);
+}
+
+body.right-active .writing, 
+body.right-active .pencil-cursor {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+body.right-active .pencil-cursor {
+    animation: fade-cursor 1.2s forwards;
+}
+
+@keyframes fade-cursor { 0%, 90% { opacity: 1; } 100% { opacity: 0; } }
+
+/* --- ÉTIQUETTES VERTICALES --- */
+.side-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #000;
+    opacity: 0.3;
+    writing-mode: vertical-rl; /* Texte à la verticale */
+    text-align: center;
+    z-index: 10;
+    transition: all 0.6s var(--easing);
+}
+
+.side-label {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #000;
+    opacity: 0.3;
+    writing-mode: vertical-rl; /* Texte à la verticale */
+    text-align: center;
+    z-index: 10;
+    transition: all 0.6s var(--easing);
+}
+
+.label-left {
+    left: 20px;
+    /* Rotation pour que le texte se lise de bas en haut */
+    transform: translateY(-50%) rotate(180deg); 
+}
+
+.label-right {
+    right: 20px;
+    transform: translateY(-50%) rotate(180deg);
+}
+
+/* --- INTERACTIONS --- */
+
+/* Effet au survol des zones de déclenchement (via le body) */
+body.left-active .label-left,
+body.right-active .label-right {
+    opacity: 0;
+    transform: translateY(-50%) scale(0.8);
+}
+
+/* Optionnel : petite animation de respiration pour attirer l'oeil */
+@keyframes label-pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+
+.side-label {
+    animation: label-pulse 3s infinite ease-in-out;
+}
+
+.to-right { 
+    top: 50%; /* Garder au centre mort pour casser la monotonie */
+    left: 20px;
+}
+
+/* --- BLOCAGE MOBILE & TABLETTE --- */
+#mobile-blocker {
+    display: none; /* Caché par défaut */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: ivory; /* Même couleur que ton fond */
+    z-index: 1000000; /* Au-dessus de tout, même du curseur */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.blocker-content {
+    max-width: 500px;
+}
+
+.blocker-logo {
+    width: 150px;
+    margin-bottom: 30px;
+    filter: grayscale(1);
+}
+
+#mobile-blocker h1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    letter-spacing: 2px;
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: #000;
+}
+
+#mobile-blocker p {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.blocker-content .small {
+    font-size: 0.85rem;
+    opacity: 0.6;
+}
+
+.device-icon {
+    font-size: 3rem;
+    margin-top: 30px;
+    animation: pulse-attention 2s infinite ease-in-out;
+}
+
+/* MÉDIA QUERY : Active le blocage si l'écran est petit OU si c'est un appareil tactile sans souris */
+@media (max-width: 1024px), (pointer: coarse) {
+    #mobile-blocker {
+        display: flex; /* On l'affiche */
+    }
+    
+    body, html {
+        overflow: hidden !important; /* On empêche tout scroll derrière */
+    }
+    
+    #cursor {
+        display: none !important; /* On cache ton curseur custom sur mobile */
+    }
+}

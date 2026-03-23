@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axel Cormon</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="mobile-blocker">
+    <div class="blocker-content">
+        <img src="https://i.imgur.com/Ns30AYK.png" alt="Logo" class="blocker-logo">
+        <h1>EXPÉRIENCE NON SUPPORTÉE</h1>
+        <p>Ce portfolio utilise des technologies avancées et une navigation interactive conçue exclusivement pour <strong>ordinateur</strong>.</p>
+        <p class="small">Pour un confort de lecture optimal et profiter des performances visuelles, merci d'y accéder via un ordinateur.</p>
+        <div class="device-icon">💻</div>
+    </div>
+</div>
+    <nav id="menu-left" class="side-menu">
+        <div class="menu-content">
+            <div class="glitch-container">
+                <a href="3d-part.html" class="menu-link glitch" data-text="3D PART">3D PART</a>
+                <div class="glitch-line"></div>
+            </div>
+        </div>
+        <div class="copyright">Cliquez sur 3D part pour être redirigé</div>
+    </nav>
+
+    <main id="main-content">
+        <div id="overlay"></div>
+
+        <div class="side-label label-left">MENU - 3D Part</div>
+        <div class="side-label label-right">MENU - Graphics Part</div>
+
+        <div id="logo-container">
+            <img src="https://i.imgur.com/Ns30AYK.png" alt="Logo" id="logo">
+            <p class="instruction">Approchez votre souris vers les bords de l'écran</p>
+        </div>
+        <div class="copyright">© Axel Cormon</div>
+    </main>
+
+    <nav id="menu-right" class="side-menu">
+        <div class="menu-content align-bottom">
+            <div class="reveal-container">
+                <a href="graphics-part.html" class="menu-link writing">GRAPHICS PART</a>
+                <div class="pencil-cursor"></div>
+            </div>
+        </div>
+        <div class="copyright-right">Cliquez sur Graphics part pour être redirigé</div>
+    </nav>
+
+    <div id="cursor"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cursor = document.getElementById("cursor");
+
+    document.addEventListener("mousemove", function(e) {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+    });
+});
+</script>
+
+
+    <script src="script.js"></script>
+</body>
+</html>

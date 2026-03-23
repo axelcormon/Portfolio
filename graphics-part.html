@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphics Part – Axel Cormon</title>
+
+<style>
+@font-face {
+    font-family: "CafeFrancoise";
+    src: url("fonts/CafeFrancoise.woff2") format("woff2");
+    font-weight: normal;
+    font-style: normal;
+}
+
+html, body {
+    cursor: none !important;
+    margin: 0;
+    padding: 0;
+    background: ivory;
+    font-family: Arial, sans-serif;
+}
+
+#cursor {
+    position: fixed;
+    width: 32px;
+    height: 32px;
+    background-image: url('https://i.imgur.com/8FCKZAi.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 9999999;
+    transform: translate(-50%, -50%);
+    filter: invert(1);
+    mix-blend-mode: difference;
+}
+
+*, *::before, *::after { cursor: none !important; }
+
+.relative-container { position: relative; width: 100%; }
+.page-image { width: 100%; height: auto; display: block; }
+
+.projets-link {
+    position: absolute; right: 12.4%; top: 76.3%; 
+    font-size: 5vw; font-weight: 700; text-decoration: none;
+    font-family: "CafeFrancoise", cursive; rotate: 7.75deg;
+    letter-spacing: 0.12em; scale: 1.15;
+    color: transparent; -webkit-text-stroke: 0.02em #000000; 
+    background: linear-gradient(to right, transparent 0%, #ff0836 100%, #ff0836 100%, transparent 0%, transparent 0%);
+    background-size: 200% 100%; -webkit-background-clip: text; background-clip: text;
+    animation: outlineSweep 3s infinite linear;
+    transition: scale 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), translate 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), letter-spacing 0.3s ease, text-shadow 0.3s ease;
+}
+
+@keyframes outlineSweep {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.projets-link:hover {
+    animation: none; background: none; -webkit-background-clip: initial; background-clip: initial;
+    scale: 1.15; translate: 0 -0.1em; letter-spacing: 0.12em; 
+    color: transparent; -webkit-text-stroke: 0.03em black; text-shadow: 0.08em 0.08em 0px #ff0836; 
+}
+
+#mobile-blocker {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: ivory; z-index: 1000000; justify-content: center;
+    align-items: center; text-align: center; padding: 20px; box-sizing: border-box;
+}
+
+.blocker-content { max-width: 500px; }
+.blocker-logo { width: 150px; margin-bottom: 30px; filter: grayscale(1); }
+#mobile-blocker h1 { font-family: 'Inter', sans-serif; font-weight: 900; letter-spacing: 2px; font-size: 1.5rem; margin-bottom: 20px; color: #000; }
+#mobile-blocker p { font-family: 'Inter', sans-serif; line-height: 1.6; color: #333; margin-bottom: 15px; }
+.blocker-content .small { font-size: 0.85rem; opacity: 0.6; }
+.device-icon { font-size: 3rem; margin-top: 30px; animation: pulse-attention 2s infinite ease-in-out; }
+
+@media (max-width: 1024px), (pointer: coarse) {
+    #mobile-blocker { display: flex; }
+    body, html { overflow: hidden !important; }
+    #cursor { display: none !important; }
+}
+</style>
+</head>
+
+<body>
+<div id="mobile-blocker">
+    <div class="blocker-content">
+        <img src="https://i.imgur.com/Ns30AYK.png" alt="Logo" class="blocker-logo">
+        <h1>EXPÉRIENCE NON SUPPORTÉE</h1>
+        <p>Ce portfolio utilise des technologies avancées et une navigation interactive conçue exclusivement pour <strong>ordinateur</strong>.</p>
+        <p class="small">Pour un confort de lecture optimal et profiter des performances visuelles, merci d'y accéder via un ordinateur.</p>
+        <div class="device-icon">💻</div>
+    </div>
+</div>
+
+<div class="relative-container">
+    <img src="https://i.imgur.com/6aCD1kN.jpeg" class="page-image" alt="Graphics page">
+    <a href="projects.html" class="projets-link">Projets</a>
+</div>
+
+<div id="cursor"></div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cursor = document.getElementById("cursor");
+    document.addEventListener("mousemove", function(e) {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+    });
+});
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // ⚠️ REMPLACE CECI PAR TA CONFIGURATION FIREBASE ⚠️
+    const firebaseConfig = {
+        apiKey: "AIzaSyDdNM9a4FebeSYb_4FHncZZUUrvQcqsOns",
+        authDomain: "suivicommande-568fa.firebaseapp.com",
+        projectId: "suivicommande-568fa",
+        storageBucket: "suivicommande-568fa.firebasestorage.app",
+        messagingSenderId: "47289143178",
+        appId: "1:47289143178:web:17f464d00a0bdb9b7d0273",
+        measurementId: "G-VP90K7NSD8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadGraphicImage() {
+        try {
+            const docSnap = await getDoc(doc(db, "settings", "graphic"));
+            if (docSnap.exists() && docSnap.data().imageUrl) {
+                document.querySelector('.page-image').src = docSnap.data().imageUrl;
+            }
+        } catch (error) {
+            console.error("Erreur de chargement Firebase:", error);
+        }
+    }
+    loadGraphicImage();
+</script>
+
+</body>
+</html>

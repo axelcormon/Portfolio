@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axel CMS - Administration</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --bg: #f8f9fa; --sidebar: #111827; --surface: #ffffff;
+            --primary: #2563eb; --text: #1f2937; --border: #e5e7eb;
+        }
+        * { box-sizing: border-box; font-family: 'Inter', -apple-system, sans-serif; }
+        body { margin: 0; display: flex; height: 100vh; background: var(--bg); color: var(--text); }
+        
+        .sidebar { width: 250px; background: var(--sidebar); color: white; display: flex; flex-direction: column; }
+        .sidebar h2 { padding: 20px; margin: 0; font-size: 1.2rem; border-bottom: 1px solid #374151; letter-spacing: 1px;}
+        .menu-btn { padding: 15px 20px; background: none; border: none; color: #9ca3af; text-align: left; cursor: pointer; font-size: 1rem; transition: 0.2s; }
+        .menu-btn:hover, .menu-btn.active { background: #1f2937; color: white; }
+        
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+        h1 { margin-top: 0; font-weight: 600; }
+        
+        .card { background: var(--surface); padding: 25px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9rem; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 5px; font-size: 0.95rem; }
+        
+        .btn { padding: 10px 15px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+        .btn-danger { background: #dc2626; }
+        .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+        
+        /* Styles pour la liste de projets */
+        .project-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 15px; border: 1px solid var(--border); border-radius: 5px; 
+            margin-bottom: 10px; background: #fafafa; cursor: grab;
+            transition: transform 0.2s;
+        }
+        .project-item:active { cursor: grabbing; }
+        .project-item .drag-handle { color: #ccc; margin-right: 15px; font-size: 1.2rem; }
+        .ghost { opacity: 0.4; background: #e0e7ff !important; border: 1px dashed var(--primary); }
+        
+        #toast { position: fixed; bottom: 20px; right: 20px; background: #10b981; color: white; padding: 15px 25px; border-radius: 5px; display: none; z-index: 10001; }
+    </style>
+</head>
+<body>
+    <div id="login-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #111827; z-index: 10000; display: flex; align-items: center; justify-content: center; color: white;">
+        <div class="card" style="width: 350px; color: #1f2937;">
+            <h2 style="margin-top: 0; text-align: center;">Connexion AxelStd</h2>
+            <div class="form-group">
+                <label>Identifiant</label>
+                <input type="text" id="login-user">
+            </div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <input type="password" id="login-pass">
+            </div>
+            <button class="btn" style="width: 100%;" onclick="checkAuth()">Se connecter</button>
+            <p id="login-error" style="color: #dc2626; font-size: 0.8rem; margin-top: 10px; display: none; text-align: center;">Identifiants incorrects.</p>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <h2>AXEL CMS</h2>
+        <button class="menu-btn active" onclick="switchTab('graphique')">🖼️ Page Graphique</button>
+        <button class="menu-btn" onclick="switchTab('projets')">📁 Projets</button>
+    </div>
+
+    <div class="main-content">
+        <div id="graphique" class="section active">
+            <h1>Page Graphique</h1>
+            <div class="card">
+                <div class="form-group">
+                    <label>Lien de l'image principale</label>
+                    <input type="text" id="graphic-img-url" placeholder="https://...">
+                </div>
+                <button class="btn" onclick="saveGraphicImage()">Enregistrer les modifications</button>
+            </div>
+        </div>
+
+        <div id="projets" class="section">
+            <h1>Gestion des Projets</h1>
+            
+            <div class="card" id="project-form-card" style="display: none;">
+                <h3 id="form-title">Ajouter un projet</h3>
+                <input type="hidden" id="project-id">
+                <div class="form-group">
+                    <label>Titre</label>
+                    <input type="text" id="proj-title">
+                </div>
+                <div class="form-group">
+                    <label>URL Image</label>
+                    <input type="text" id="proj-img">
+                </div>
+                <div class="form-group">
+                    <label>Lien Web</label>
+                    <input type="text" id="proj-url">
+                </div>
+                <div class="form-group">
+                    <label>Compétences (séparées par des virgules)</label>
+                    <input type="text" id="proj-skills">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="proj-desc"></textarea>
+                </div>
+                <button class="btn" onclick="saveProject()">Enregistrer</button>
+                <button class="btn btn-outline" onclick="hideProjectForm()">Annuler</button>
+            </div>
+
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="margin: 0;">Liste (Glisser pour réorganiser)</h3>
+                    <button class="btn" onclick="showProjectForm()">+ Nouveau projet</button>
+                </div>
+                <div id="projects-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast">Modifications sauvegardées !</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDdNM9a4FebeSYb_4FHncZZUUrvQcqsOns",
+            authDomain: "suivicommande-568fa.firebaseapp.com",
+            projectId: "suivicommande-568fa",
+            storageBucket: "suivicommande-568fa.firebasestorage.app",
+            messagingSenderId: "47289143178",
+            appId: "1:47289143178:web:17f464d00a0bdb9b7d0273"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- NAVIGATION ET UI ---
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.menu-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        const showToast = (msg) => {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 3000);
+        };
+
+        // --- GESTION PROJETS ---
+        let currentProjects = [];
+
+        const loadProjects = async () => {
+            const q = query(collection(db, "projects"), orderBy("order", "asc"));
+            const querySnapshot = await getDocs(q);
+            const list = document.getElementById('projects-list');
+            list.innerHTML = '';
+            currentProjects = [];
+            
+            querySnapshot.forEach((doc) => {
+                const data = { id: doc.id, ...doc.data() };
+                currentProjects.push(data);
+                list.innerHTML += `
+                    <div class="project-item" data-id="${doc.id}">
+                        <div><span class="drag-handle">☰</span> <strong>${data.title}</strong></div>
+                        <div class="project-actions">
+                            <button class="btn btn-outline" onclick="editProject('${doc.id}')">Éditer</button>
+                            <button class="btn btn-danger" onclick="deleteProject('${doc.id}')">Supprimer</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Initialiser le Drag & Drop
+            Sortable.create(list, {
+                animation: 150,
+                handle: '.drag-handle',
+                ghostClass: 'ghost',
+                onEnd: saveNewOrder
+            });
+        };
+
+        const saveNewOrder = async () => {
+            const items = document.querySelectorAll('.project-item');
+            const batch = writeBatch(db);
+            
+            items.forEach((item, index) => {
+                const docRef = doc(db, "projects", item.getAttribute('data-id'));
+                batch.update(docRef, { order: index });
+            });
+
+            await batch.commit();
+            showToast("Ordre mis à jour !");
+        };
+
+        window.saveProject = async () => {
+            const id = document.getElementById('project-id').value;
+            const projectData = {
+                title: document.getElementById('proj-title').value,
+                image: document.getElementById('proj-img').value,
+                url: document.getElementById('proj-url').value,
+                skills: document.getElementById('proj-skills').value,
+                description: document.getElementById('proj-desc').value
+            };
+
+            if (id) {
+                await updateDoc(doc(db, "projects", id), projectData);
+                showToast("Projet modifié !");
+            } else {
+                // Pour mettre en haut, on donne l'ordre 0 et on décale les autres
+                projectData.order = -1; 
+                await addDoc(collection(db, "projects"), projectData);
+                await reindexAll(); // Force le nouvel élément à passer en haut proprement
+                showToast("Projet ajouté en haut !");
+            }
+            hideProjectForm();
+            loadProjects();
+        };
+
+        const reindexAll = async () => {
+            const q = query(collection(db, "projects"), orderBy("order", "asc"));
+            const snap = await getDocs(q);
+            const batch = writeBatch(db);
+            let i = 0;
+            snap.forEach(d => {
+                batch.update(d.ref, { order: i++ });
+            });
+            await batch.commit();
+        };
+
+        window.editProject = (id) => {
+            const data = currentProjects.find(p => p.id === id);
+            document.getElementById('project-form-card').style.display = 'block';
+            document.getElementById('form-title').innerText = "Modifier le projet";
+            document.getElementById('project-id').value = id;
+            document.getElementById('proj-title').value = data.title;
+            document.getElementById('proj-img').value = data.image;
+            document.getElementById('proj-url').value = data.url;
+            document.getElementById('proj-skills').value = data.skills;
+            document.getElementById('proj-desc').value = data.description;
+        };
+
+        window.showProjectForm = () => {
+            document.getElementById('project-form-card').style.display = 'block';
+            document.getElementById('form-title').innerText = "Ajouter un projet";
+            document.getElementById('project-id').value = '';
+            document.getElementById('proj-title').value = '';
+            document.getElementById('proj-img').value = '';
+            document.getElementById('proj-url').value = '';
+            document.getElementById('proj-skills').value = '';
+            document.getElementById('proj-desc').value = '';
+        };
+
+        window.hideProjectForm = () => {
+            document.getElementById('project-form-card').style.display = 'none';
+        };
+
+        window.deleteProject = async (id) => {
+            if (confirm("Supprimer ce projet ?")) {
+                await deleteDoc(doc(db, "projects", id));
+                loadProjects();
+            }
+        };
+
+        // --- GRAPHIQUE ---
+        window.saveGraphicImage = async () => {
+            const url = document.getElementById('graphic-img-url').value;
+            await setDoc(doc(db, "settings", "graphic"), { imageUrl: url });
+            showToast("Image mise à jour !");
+        };
+
+        // Initialisation
+        const loadInit = async () => {
+            const gSnap = await getDoc(doc(db, "settings", "graphic"));
+            if (gSnap.exists()) document.getElementById('graphic-img-url').value = gSnap.data().imageUrl;
+            loadProjects();
+        };
+        loadInit();
+    </script>
+
+    <script>
+        function checkAuth() {
+            const u = document.getElementById('login-user').value;
+            const p = document.getElementById('login-pass').value;
+            if (u === "axelstd" && p === "20022007") {
+                sessionStorage.setItem('axel_auth', 'true');
+                document.getElementById('login-overlay').style.display = 'none';
+            } else {
+                document.getElementById('login-error').style.display = 'block';
+            }
+        }
+        if (sessionStorage.getItem('axel_auth') === 'true') {
+            document.getElementById('login-overlay').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
