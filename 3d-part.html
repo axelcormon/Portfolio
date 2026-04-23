@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio - 3D Part Fullscreen</title>
+    <style>
+        /* --- STYLES GÉNÉRAUX FLUIDES --- */
+        body, html {
+            cursor: none !important;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+            background-color: ivory;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        #cursor {
+            position: fixed;
+            width: 32px;
+            height: 32px;
+            background-image: url('https://i.imgur.com/8FCKZAi.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            pointer-events: none;
+            z-index: 9999999;
+            transform: translate(-50%, -50%);
+            filter: invert(1);
+            mix-blend-mode: difference;
+        }
+
+        *, *::before, *::after { cursor: none !important; }
+
+        /* Classe temporaire pour empêcher le défilement pendant l'intro */
+        body.locked {
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .page-container {
+            width: 100%;
+            padding: 5vw;
+            box-sizing: border-box;
+        }
+
+        /* --- MOBILE BLOCKER --- */
+        #mobile-blocker {
+            display: none; /* Caché par défaut */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: ivory;
+            z-index: 1000000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .blocker-content { max-width: 500px; }
+        
+        .blocker-logo { 
+            width: 150px; 
+            margin-bottom: 30px; 
+            filter: grayscale(1); 
+        }
+
+        #mobile-blocker h1 { 
+            font-family: 'Inter', sans-serif; 
+            font-weight: 900; 
+            letter-spacing: 2px; 
+            font-size: 1.5rem; 
+            margin-bottom: 20px; 
+            color: #000; 
+        }
+
+        #mobile-blocker p { 
+            font-family: 'Inter', sans-serif; 
+            line-height: 1.6; 
+            color: #333; 
+            margin-bottom: 15px; 
+        }
+
+        .blocker-content .small { 
+            font-size: 0.85rem; 
+            opacity: 0.6; 
+        }
+
+        .device-icon { 
+            font-size: 3rem; 
+            margin-top: 30px; 
+            animation: pulse-attention 2s infinite ease-in-out; 
+        }
+
+        @keyframes pulse-attention {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+
+        /* ACTIVATION DU BLOQUEUR (Tablettes et Mobiles) */
+        @media (max-width: 1024px), (pointer: coarse) {
+            #mobile-blocker { display: flex; }
+            body, html { overflow: hidden !important; }
+            #cursor { display: none !important; }
+        }
+
+        /* --- ÉCRAN D'ACCUEIL (HERO) --- */
+        .hero-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: ivory;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 1s cubic-bezier(0.85, 0, 0.15, 1), opacity 1s ease;
+        }
+
+        /* Classe ajoutée par JS pour faire disparaître l'écran */
+        .hero-screen.hidden {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Conteneur de la barre de chargement */
+        .loader-container {
+            margin-bottom: 5vw;
+            width: 250px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .please-wait {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #333;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 2px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background: #000;
+            transition: width 0.3s ease-out;
+        }
+
+        .est-time {
+            font-size: 11px;
+            color: #888;
+            letter-spacing: 1px;
+        }
+
+        /* --- HEADER & SCÈNE 3D --- */
+        .header-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 45vw; 
+            perspective: 1200px; 
+            margin-bottom: 2vw; /* Réduit pour laisser place au bouton */
+        }
+
+        .scene-3d {
+            position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-10deg) rotateY(15deg);
+        }
+
+        /* --- TITRE 3D --- */
+        .title-block {
+            line-height: 0.8;
+            color: #000000;
+            font-weight: 900;
+            letter-spacing: -0.2vw;
+            text-align: center;
+            text-shadow: 
+                0.1vw 0.1vw 0 #d1d1d1,
+                0.2vw 0.2vw 0 #c2c2c2,
+                0.3vw 0.3vw 0 #b3b3b3,
+                0.4vw 0.4vw 0 #a3a3a3,
+                0.5vw 0.5vw 0 #949494,
+                0.6vw 0.6vw 1.5vw rgba(0,0,0,0.4);
+            transform: translateZ(30px);
+        }
+
+        .title-3d, .title-part {
+            font-size: 11vw;
+            display: block;
+        }
+
+        /* --- ANNEAU ORBITAL --- */
+        .circular-text-svg {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 45vw; 
+            height: 45vw;
+            margin-top: -22.5vw;
+            margin-left: -22.5vw;
+            transform-style: preserve-3d;
+            animation: orbitRing 15s linear infinite;
+            pointer-events: none; 
+        }
+
+        @keyframes orbitRing {
+            0% { transform: rotateX(70deg) rotateZ(0deg); }
+            100% { transform: rotateX(70deg) rotateZ(360deg); }
+        }
+
+        .circular-text-svg text {
+            font-size: 19px;
+            font-weight: 900;
+            fill: #000000;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        /* --- BOUTON DE DÉFILEMENT --- */
+        .scroll-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #f6f6f6;
+            background-color: #000000;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, background-color 0.3s ease, box-shadow 0.3s ease;
+            margin-bottom: 5vw;
+        }
+
+        .scroll-btn:hover {
+            transform: translateY(-3px);
+            background-color: #333;
+            box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+        }
+
+        /* --- STYLES DES CASES --- */
+        .box {
+            border: 1px solid #ccc;
+            background-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .box::after {
+            content: "© Axel CORMON. All Rights Reserved.";
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0,0,0,0.5); /* Pour qu'il reste visible sur fond clair */
+            opacity: 0.6;
+            pointer-events: none; /* Pour que le clic passe à travers vers la vidéo/image */
+            z-index: 2;
+        }
+
+        .box:hover .box-media {
+            transform: scale(1.05); /* Léger zoom de l'image au survol */
+            transition: transform 0.6s ease;
+        }
+
+        .box-media {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Remplir la case sans déformer l'image/vidéo */
+            display: block;
+            transition: transform 0.6s ease; /* Pour que l'animation de dézoom soit fluide aussi */
+        }
+
+        .grid-1 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5vw; margin-bottom: 5vw; margin-top: 5vw; }
+        .g1-top { grid-column: 1 / 5; height: 40vw; }
+        .g1-v-left1 { grid-column: 1 / 5; height: 45vw; }
+        .g1-h-right { grid-column: 1 / 5; height: 45vw; }
+
+        .section-title { font-size: 2.5vw; font-weight: 700; color: #000000; margin-bottom: 2vw; margin-top: 0; }
+
+        .grid-2 { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); /* On reste sur 4 colonnes comme la Grid 1 */
+            gap: 1.5vw; 
+        }
+
+        .g2-top { 
+            grid-column: 1 / 5; /* Occupe toute la largeur (de 1 à 5) */
+            height: 50vw; 
+        }
+
+        .g2-top-left { 
+            grid-column: 1 / 3; /* Occupe la moitié gauche */
+            height: 30vw; 
+        }
+
+        .g2-top-right { 
+            grid-column: 3 / 5; /* Occupe la moitié droite */
+            height: 30vw; 
+        }
+
+        .g2-bottom-1 { 
+            grid-column: 1 / 5; /* Occupe toute la largeur */
+            height: 38vw; 
+        }
+
+        .g2-bottom { 
+            grid-column: 1 / 5; 
+            height: 45vw; 
+        }
+
+        .grid-3 { 
+            display: grid; 
+            grid-template-columns: 3fr 1.2fr; /* Ratio parfait pour juxtaposer un 16:9 et un 9:16 */
+            gap: 1.5vw; 
+            margin-bottom: 1.5vw; 
+        }
+        .g3-mov { height: 45vw; }
+        .g3-insta { height: 45vw; }
+
+        .grid-4 { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 1.5vw; 
+            margin-bottom: 5vw; 
+        }
+        .g4-square { 
+            grid-column: 1 / 3; 
+            height: 60vw; /* Assez grand pour mettre en valeur le format carré 2048x2048 */
+            margin-bottom: 1.5vw;
+        }
+        .g4-img { 
+            height: 25vw; /* S'adapte parfaitement au ratio panoramique 1920x1000 */
+        }
+
+        /* --- MODE MOBILE --- */
+        @media (max-width: 768px) {
+            .header-section { height: 70vw; }
+            .title-3d, .title-part { font-size: 18vw; }
+            .circular-text-svg { width: 75vw; height: 75vw; margin-top: -37.5vw; margin-left: -37.5vw; }
+            .scroll-btn { margin-top: 15vw; padding: 12px 30px; font-size: 1rem; }
+            .section-title { font-size: 6vw; margin-top: 5vw; margin-bottom: 4vw; }
+            .grid-1, .grid-2, .grid-3, .grid-4 { display: flex; flex-direction: column; gap: 4vw; }
+            .g4-square { height: 90vw; } /* Garde l'aspect carré sur mobile */
+            .g4-img { height: 50vw; }
+            .box { height: 50vw; }
+        }
+
+        /* --- STYLE DU HEADER DANS LE PORTFOLIO --- */
+
+        .header-section-2 {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6vw;
+            position: relative;
+        }
+
+        .main-portfolio-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8vw;
+            position: relative;
+            perspective: 1000px;
+            isolation: isolate; /* Important pour le mix-blend-mode */
+        }
+
+        .circular-text-svg-main {
+            position: absolute;
+            left: 9vw; 
+            top: -2.5vw; /* Ajusté légèrement */
+            width: 23vw; /* Un peu plus large pour ne pas couper le texte */
+            height: 23vw;
+            
+            transform-style: preserve-3d;
+            /* On utilise une animation spécifique pour ne pas toucher au loader */
+            animation: rotate3D-MainContent 15s linear infinite;
+            
+            transform-origin: center;
+            pointer-events: none; 
+        }
+
+        .circular-text-svg-main text {
+            font-size: 18px;
+            font-weight: 900;
+            fill: #9b9b9b; /* Blanc pour l'effet d'inversion sur le noir */
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            filter: drop-shadow(0px 5px 3px rgba(0,0,0,0.15));
+        }
+
+        /* L'animation qui combine la 3D et le décalage du "All" vers le haut */
+        @keyframes rotate3D-MainContent {
+            0% {
+                /* rotateZ(-30deg) permet de garder le "All" en haut au démarrage */
+                transform: rotateX(25deg) rotateY(-15deg) rotateZ(-30deg);
+            }
+            100% {
+                /* On finit à 330deg (360 - 30) pour un tour complet fluide */
+                transform: rotateX(25deg) rotateY(-15deg) rotateZ(330deg);
+            }
+        }
+
+        .title-block-2 {
+            line-height: 0.8;
+            color: #000000;
+            font-weight: 900;
+            letter-spacing: -0.2vw;
+            z-index: 1;
+        }
+
+        .title-3d-2, .title-part-2 {
+            font-size: 9vw; /* La taille du texte grandit avec l'écran */
+            display: block;
+        }
+
+        .front-letter {
+            position: relative;
+            display: inline-block;
+            /* On lui donne un z-index très élevé pour passer devant tout le reste */
+            z-index: 100; 
+            
+            /* Optionnel : si tu veux accentuer l'effet 3D de cette lettre */
+            transform: translateZ(50px); 
+        }
+
+        /* Style du Menu en haut à gauche */
+        .top-menu {
+            position: absolute;
+            top: 40px;
+            right: 40px; /* Position à droite */
+            z-index: 10000; /* Au-dessus de tout sauf du curseur */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            text-align: right; /* Aligne le texte à droite */
+        }
+
+        .menu-item {
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: #1a1a1a; /* Couleur par défaut */
+            font-weight: 400;
+            transition: all 0.4s ease;
+            opacity: 0.6;
+            position: relative;
+            width: fit-content;
+        }
+
+        .menu-item:hover {
+            opacity: 1;
+            transform: translateX(-10px);
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: currentColor;
+            transition: width 0.4s ease;
+        }
+
+        .menu-item:hover::before {
+            width: 100%;
+        }
+
+        .site-footer {
+            width: 100%;
+            padding: 40px 0;
+            text-align: center;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            color: #333;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="locked"> 
+    <div id="mobile-blocker">
+        <div class="blocker-content">
+            <img src="https://i.imgur.com/Ns30AYK.png" alt="Logo" class="blocker-logo">
+            <h1>EXPÉRIENCE NON SUPPORTÉE</h1>
+            <p>Ce portfolio utilise des technologies avancées et une navigation interactive conçue exclusivement pour <strong>ordinateur</strong>.</p>
+            <p class="small">Pour un confort de lecture optimal et profiter des performances visuelles, merci d'y accéder via un ordinateur.</p>
+            <div class="device-icon">💻</div>
+        </div>
+    </div>
+    <div id="loader-screen" class="hero-screen">
+        <div class="header-section">
+            <div class="scene-3d">
+                
+                <div class="title-block">
+                    <span class="title-3d">3D</span>
+                    <span class="title-part">PA<span class="front-letter">R</span>T</span>
+                </div>
+                
+                <svg class="circular-text-svg" viewBox="0 0 500 500">
+                    <path id="text-curve" 
+                        d="M 50, 250 
+                           a 200,200 0 1,1 400,0 
+                           a 200,200 0 1,1 -400,0" 
+                        fill="transparent" />
+                    <text>
+                        <textPath href="#text-curve" startOffset="0%">
+                            ALL MADE WITH BLENDER BY ME   •   Axel Cormon •   ALL MADE WITH BLENDER BY ME  •   3D   •  
+                        </textPath>
+                    </text>
+                </svg>
+
+            </div>
+        </div>
+        
+        <div class="loader-container">
+            <span class="please-wait">Please wait</span>
+            <div class="progress-bar-bg">
+                <div id="progress-fill"></div>
+            </div>
+            <span class="est-time" id="est-timer">Estimated time: 3s</span>
+        </div>
+    </div>
+
+    <div id="cursor"></div>
+
+    <div class="page-container">
+        <div class="header-section-2 main-portfolio-header">
+            <nav class="top-menu">
+        <a href="graphics-part.html" class="menu-item" data-filter="graphique">Partie Graphique</a>
+    </nav>
+            <div class="title-block-2">
+                        <span class="title-3d-2">3D</span>
+                        <span class="title-part-2">PART</span>
+                    </div>
+                    
+                    <div class="circular-wrapper"></div>
+                    <svg class="circular-text-svg-main" viewBox="0 0 350 350">
+                        <path id="path-main" 
+                            d="M 67,175 A 108,108 0 1,1 283,175 A 108,108 0 1,1 67,175" 
+                            fill="transparent" />
+                        <text>
+                            <textPath href="#path-main" startOffset="0%">
+                                • All made with blender by me • Axel Cormon • 3D Part •
+                            </textPath>
+                        </text>
+                    </svg>
+            </div>
+
+        <div class="grid-1">
+            <div class="box g1-top"><video src="files/videos/video1.mp4" autoplay loop muted playsinline class="box-media"></video></div>
+            
+            <div class="box g1-v-left1"><img src="files/images/image1.png" alt="Scene1" class="box-media"></div>
+            <div class="box g1-h-right"><img src="files/images/image2.png" alt="Scene1-backstage" class="box-media"></div>
+        </div>
+
+        <!-- <h2 class="section-title">Biographie</h2> -->
+
+        <div class="grid-2">
+            <div class="box g2-top"><video src="files/videos/video2.mp4" autoplay loop muted playsinline class="box-media"></video></div>
+            <div class="box g2-top-left"><img src="files/images/image4.png" alt="Scene2" class="box-media"></div>
+            <div class="box g2-top-right"><img src="files/images/image3.png" alt="Scene3" class="box-media"></div>
+            <div class="box g2-bottom-1"><video src="files/videos/video3.mp4" autoplay loop muted playsinline class="box-media"></video></div>
+            <div class="box g2-bottom"><img src="files/images/image20.png" alt="Scene3" class="box-media"></div>
+        </div><br>
+
+        <div class="grid-3">
+            <div class="box g3-mov">
+                <video src="files/videos/video4.mov" autoplay loop muted playsinline class="box-media"></video>
+            </div>
+            
+            <div class="box g3-insta">
+                <video src="files/videos/video5.mp4" autoplay loop muted playsinline class="box-media"></video>
+            </div>
+        </div>
+
+        <div class="grid-4">
+            <!-- <div class="box g4-square">
+                <img src="files/images/image_carree.png" alt="Square Render" class="box-media">
+            </div> -->
+
+            <div class="box g4-img"><img src="files/images/image5.png" alt="Render 1" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image6.png" alt="Render 2" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image15.png" alt="Render 13" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image7.png" alt="Render 3" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image8.png" alt="Render 4" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image9.png" alt="Render 5" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image10.png" alt="Render 6" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image11.png" alt="Render 7" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image12.png" alt="Render 8" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image13.png" alt="Render 9" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image14.png" alt="Render 10" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image16.png" alt="Render 11" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image18.png" alt="Render 14" class="box-media"></div>
+            <div class="box g4-img"><img src="files/images/image19.png" alt="Render 15" class="box-media"></div>
+        </div>
+        </div>
+
+        <footer class="site-footer">
+            © Axel CORMON <span id="year"></span>. All Rights Reserved.
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Met à jour l'année dynamiquement
+            document.getElementById("year").textContent = new Date().getFullYear();
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let timeLeft = 5;
+            let timerInterval;
+            let isDismissed = false;
+            
+            const hero = document.getElementById('hero');
+            const btn = document.getElementById('scroll-btn');
+            
+            // Fonction pour faire disparaître l'écran d'accueil
+            function dismissHero() {
+                if (isDismissed) return; // Empêche l'exécution multiple
+                isDismissed = true;
+                
+                clearInterval(timerInterval); // Arrête le chrono
+                
+                // Déclenche l'animation CSS
+                hero.classList.add('hidden');
+                
+                // Débloque le défilement de la page
+                document.body.classList.remove('locked');
+                
+                // Supprime l'élément du DOM après la fin de l'animation (0.8s) pour qu'il ne gêne plus
+                setTimeout(() => {
+                    hero.style.display = 'none';
+                }, 800);
+                
+                // Retire les écouteurs d'événements pour éviter les bugs
+                window.removeEventListener('wheel', handleInteraction);
+                window.removeEventListener('touchmove', handleInteraction);
+                window.removeEventListener('keydown', handleKeyInteraction);
+            }
+        });
+    </script>
+    <script>
+    window.addEventListener('load', () => {
+        const loader = document.getElementById('loader-screen');
+        const fill = document.getElementById('progress-fill');
+        const timerText = document.getElementById('est-timer');
+        
+        let progress = 0;
+        const minDuration = 3000; // 3 secondes minimum
+        const intervalTime = 30; 
+        const step = (intervalTime / minDuration) * 100;
+
+        const loadingInterval = setInterval(() => {
+            progress += step;
+            if (progress > 100) progress = 100;
+            
+            fill.style.width = progress + "%";
+            
+            // Calcul du temps restant pour l'affichage
+            let remaining = Math.ceil((minDuration - (progress * minDuration / 100)) / 1000);
+            timerText.textContent = `Estimated time: ${remaining}s`;
+
+            if (progress >= 100) {
+                clearInterval(loadingInterval);
+                
+                // On cache le loader
+                loader.classList.add('hidden');
+                // On débloque le scroll
+                document.body.classList.remove('locked');
+                
+                // On retire l'élément du DOM après l'animation
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 1000);
+            }
+        }, intervalTime);
+    });
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const cursor = document.getElementById("cursor");
+    document.addEventListener("mousemove", function(e) {
+        cursor.style.left = e.clientX + "px";
+        cursor.style.top = e.clientY + "px";
+    });
+});
+</script>
+</body>
+</html>
